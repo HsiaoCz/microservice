@@ -30,8 +30,11 @@ value是[]string类型
 metadata可以使得client和server端能够为对方提供关于本次调用的一些信息，就像一次http请求的requestHeader和ResponseHeader一样
 
 http中header的生命周期是一次http请求，那么metadata的生命周期就是一次rpc调用
+有一些需要注意的点是：metadata 中的键不能以grpc-开头
+metadata一般是在请求和响应过程中，需要但不是具体业务的信息，比如说身份验证
 
-新建matedata
+
+新建metadata
 MD实际是map,key是string,value是[]string
 ```go
 type MD map[string][]string
@@ -69,3 +72,20 @@ func(s *Server)SomeRPC(ctx context.Context,in *pb.SomeRequest)(*pb.SomeResponse,
     
 }
 ```
+
+元数据可以存储二进制的数据
+```go
+md:=metadata.Pairs(
+	"key","string value",
+	"key-bin",string([]byte{96,102}), //二进制发送前会进行(base64)编码 ，收到后会进行解码
+	)
+```
+
+## grpc错误码
+
+
+## 拦截器
+
+所谓的拦截器就是在还没有进入请求之前对每个请求先做一遍预处理
+grpc内置了拦截器的配置
+有一个库:go-grpc/middleware
