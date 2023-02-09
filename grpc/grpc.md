@@ -259,3 +259,49 @@ conn, err := grpc.Dial(
 
 ### go使用grpc负载均衡
 
+首先要理解一个东西：
+名称解析：name resolving
+它会将域名给解析成ip地址，并将这些ip地址发送到负载均衡器
+由负载均衡器来对这些服务进行连接操作
+
+比如有一个域名：http://wwww.examplename.com  被名称解析器解析器解析出了这四个ip
+192.167.12.14,
+192.168.13.15,
+192.168.23.14,
+192.168.24.15
+负载均衡器会将请求在这四个服务之间负载均衡
+
+名称解析器使用:
+grpc默认的名称解析从DNS解析:
+```go
+conn, err := grpc.Dial("dns:///localhost:8972",
+	grpc.WithTransportCredentials(insecure.NewCredentials()),
+)
+```
+解析的语法：
+dns:///localhost:8932
+
+除了从dns名称解析 还可以从consul做名称解析
+github地址[https://github.com/mbobakov/grpc-consul-resolver]
+
+使用:
+```go
+package main
+import _ "github.com/mbobakov/grpc-consul-resolver"
+// ...
+conn, err := grpc.Dial(
+		// consul服务
+		"consul://192.168.1.11:8500/hello?wait=14s",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+```
+
+当然名称解析也可以自定义
+有了名称解析之后使用负载均衡策略
+```go
+conn, err := grpc.Dial(
+	"consul://192.168.1.11:8500/hello?wait=14s",
+	grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`), // 这里设置初始策略
+	grpc.WithTransportCredentials(insecure.NewCredentials()),
+)
+```
