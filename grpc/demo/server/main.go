@@ -12,14 +12,13 @@ import (
 )
 
 // hello server端
-// gprc 首先一个结构体
+// grpc 首先一个结构体
 type server struct {
 	pb.UnimplementedHelloServiceServer
 }
 
 func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloResponse, error) {
-
-	// 服务端接收metadata
+	//服务端接收metadata
 	// 这里ok代表什么呢？
 	// 另外 直接打印会将所有的东西都打印出来
 	// 这里如果只需要一部分的内容的话,可以筛选以下
