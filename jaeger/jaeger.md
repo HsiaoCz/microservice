@@ -44,7 +44,20 @@ Query:接收查询请求，然后从后端存储系统中检索trace并通过UI�
 
 ### python语言集成jaeger
 
+先下载:
+
 ```python
+pip install jaeger-client
+```
+先弄清楚一些东西：
+在分布式链路跟踪中有两个重要的概念：跟踪（trace）和 跨度（ span）。trace 是请求在分布式系统中的整个链路视图，span 则代表整个链路中不同服务内部的视图，span 组合在一起就是整个 trace 的视图。
+
+在整个请求的调用链中，请求会一直携带 traceid 往下游服务传递，每个服务内部也会生成自己的 spanid 用于生成自己的内部调用视图，并和traceid一起传递给下游服务。
+
+traceid 在请求的整个调用链中始终保持不变，所以在日志中可以通过 traceid 查询到整个请求期间系统记录下来的所有日志。请求到达每个服务后，服务都会为请求生成spanid，而随请求一起从上游传过来的上游服务的 spanid 会被记录成parent-spanid或者叫 pspanid。当前服务生成的 spanid 随着请求一起再传到下游服务时，这个spanid 又会被下游服务当做 pspanid 记录。
+
+### go集成jaeger
+
+```go
 
 ```
-
