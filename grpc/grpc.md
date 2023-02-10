@@ -346,29 +346,29 @@ docker pull consul
 ```docker
 docker run -d -p 8500:8500 -p 8300:8300 -p 8301:8301 -p 8302:8302 -p 8600:8600/udp consul consul agent -dev -client=0.0.0.0
 ```
+
 访问地址:
-wsl:172.20.115.6:8500 网页端访问consul
+wsl:172.20.115.6:8500 网页端访问 consul
 有图形化界面
 
-如果希望一个容器在重启docker的时候能够自动重启 需要以下命令:
+如果希望一个容器在重启 docker 的时候能够自动重启 需要以下命令:
+
 ```docker
 docker container update  --restart=always 容器id
 ```
 
-这里要注意的是： consul有两个默认端口 一个是8500 这个端口是HTTP的端口 还有一个是8600 这个是dns的端口
+这里要注意的是： consul 有两个默认端口 一个是 8500 这个端口是 HTTP 的端口 还有一个是 8600 这个是 dns 的端口
 
-访问dns consul提供dns功能，可以让我们通过dig命令行来测试，consul dns端口是8600 命令行:
+访问 dns consul 提供 dns 功能，可以让我们通过 dig 命令行来测试，consul dns 端口是 8600 命令行:
+
 ```bash
 dig @172.20.115.6 -8600 consul.service.consul SRV
 这里 consul.service.consul 是域名自己起的
 ```
 
-这里不禁要问：DNS是干嘛的？ 简单来说 我们访问一个页面 比如说:www.taobao.com 访问淘宝的服务器 实际上是访问不到的 当我们访问这个域名的时候，浏览器会拿着这个域名去dns去查询 dns查询该域名的ip地址，将ip地址返回给浏览器 浏览器拿着ip地址访问服务
+这里不禁要问：DNS 是干嘛的？ 简单来说 我们访问一个页面 比如说:www.taobao.com 访问淘宝的服务器 实际上是访问不到的 当我们访问这个域名的时候，浏览器会拿着这个域名去 dns 去查询 dns 查询该域名的 ip 地址，将 ip 地址返回给浏览器 浏览器拿着 ip 地址访问服务
 
-我们在windos system32 driver 找到host 将ip地址注册到里面 浏览器就可以不走DNS，直接访问服务
+我们在 windos system32 driver 找到 host 将 ip 地址注册到里面 浏览器就可以不走 DNS，直接访问服务
 
-关于注册中心与dns
-一个服务在调用另外一个服务的时候， 我们需要知道另外一个服务的URL接口 如果是第三方的来调用 走网关 如果我们将注册中心伪装成一个DNS 一个服务在注册中心注册的时候，就生成一个域名 那么网关只需要开放一个DNS查询功能就可以了
-
-### 1.consul服务注册
-
+关于注册中心与 dns
+一个服务在调用另外一个服务的时候， 我们需要知道另外一个服务的 URL 接口 如果是第三方的来调用 走网关 如果我们将注册中心伪装成一个 DNS 一个服务在注册中心注册的时候，就生成一个域名 那么网关只需要开放一个 DNS 查询功能就可以了

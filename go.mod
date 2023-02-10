@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/gin-gonic/gin v1.8.2
 	github.com/hashicorp/consul/api v1.18.0
+	github.com/philchia/agollo/v4 v4.1.4
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.28.1
 )
