@@ -6,7 +6,7 @@ type IUserService interface {
 
 type UserService struct{}
 
-func (u *UserService) GetName(userID int) string {
+func (u UserService) GetName(userID int) string {
 	if userID == 101 {
 		return "bob"
 	}
