@@ -118,3 +118,100 @@ WarmUp 方式，即预热/冷启动方式。当系统长期处于低水位的情
 
 简单来说，当我们配置了每秒钟的流量阈值，而平常的流量处在低水平，如果突然流量上来了，系统直接拉到最高水平，显然对系统是不好的
 冷启动的意思就是让流量缓慢攀升到最高水平，而不至于让系统压力过大
+
+```go
+// 先初始化
+	err := sentinel.InitDefault()
+	if err != nil {
+		log.Fatalf("初始化异常:%v\n", err)
+	}
+	// TokenCalculateStrategy: 这里我们配置成冷启动
+	// ControlBehavior:        flow.Reject, // 表示流量控制器的控制策略,当超出阈值之后怎么办，flow.Reject
+	// 表示直接拒绝
+	_, err = flow.LoadRules([]*flow.Rule{
+		{
+			Resource:               "some-test", // 规则的作用目标，资源名
+			TokenCalculateStrategy: flow.WarmUp, // 当前流量控制器的Token计算策略,flow.WarmUp表示冷启动
+			ControlBehavior:        flow.Reject, // 表示流量控制器的控制策略
+			Threshold:              1000,        // 表示流量阈值 1s有十个流量进来
+			// StatIntervalInMs:       1000,        // 规则对应的流量控制器的独立统计结构的统计周期
+			WarmUpPeriodSec: 60, // 表示预热的时长  表示多长时间达到上限
+			// WarmUpColdFactor: 3, //这里表示预热的因子，表示预热的速度
+		},
+	})
+```
+
+### ControlBehavior
+
+字段 ControlBehavior 表示表示流量控制器的控制行为，目前 Sentinel 支持两种控制行为：
+
+Reject：表示如果当前统计周期内，统计结构统计的请求数超过了阈值，就直接拒绝。
+Throttling：表示匀速排队的统计策略。它的中心思想是，以固定的间隔时间让请求通过。当请求到来的时候，如果当前请求距离上个通过的请求通过的时间间隔不小于预设值，则让当前请求通过；否则，计算当前请求的预期通过时间，如果该请求的预期通过时间小于规则预设的 timeout 时间，则该请求会等待直到预设时间到来通过（排队等待处理）；若预期的通过时间超出最大排队时长，则直接拒接这个请求。
+
+匀速排队方式会严格控制请求通过的间隔时间，也即是让请求以均匀的速度通过，对应的是漏桶算法。该方式的作用如下图所示：
+
+这种方式主要用于处理间隔性突发的流量，例如消息队列。想象一下这样的场景，在某一秒有大量的请求到来，而接下来的几秒则处于空闲状态，我们希望系统能够在接下来的空闲期间逐渐处理这些请求，而不是在第一秒直接拒绝多余的请求。
+
+> 简单来说匀速排队等待就是在一定的时间间隔内允许请求通过，如果 qps=2，那么 sentinel 会计算，每隔 500ms 通过一个请求
+
+以下规则代表每 100ms 最多通过一个请求，多余的请求将会排队等待通过，若排队时队列长度大于 500ms 则直接拒绝：
+
+```go
+{
+	Resource:          "some-test",
+        TokenCalculateStrategy: flow.Direct,
+	ControlBehavior:   flow.Throttling, // 流控效果为匀速排队
+        Threshold:             10, // 请求的间隔控制在 1000/10=100 ms
+	MaxQueueingTimeMs: 500, // 最长排队等待时间
+}
+```
+
+上面 Threshold 是 10，Sentinel 默认使用 1s 作为控制周期，表示 1 秒内 10 个请求匀速排队，所以排队时间就是 1000ms/10 = 100ms；
+
+特别地，MaxQueueingTimeMs 设为 0 时代表不允许排队，只控制请求时间间隔，多余的请求将会直接拒绝。
+
+### sentinel 的熔断接口
+[https://sentinelguard.io/zh-cn/docs/golang/circuit-breaking.html]
+
+
+### gin集成sentiel
+
+将这一部分拿过来整成一个函数，放在一个单独的文件里
+注意把log改一下 改成自己用的
+```go
+func InitSentinel(){
+	err := sentinel.InitDefault()
+	if err != nil {
+		log.Fatalf("初始化异常:%v\n", err)
+	}
+	// 这里的配置应该从nacos里读取，或者从别的配置中心读取
+	_, err = flow.LoadRules([]*flow.Rule{
+		{
+			Resource:               "some-test", // 这里可以改成自己服务的名字
+			TokenCalculateStrategy: flow.Direct, // 当前流量控制器的Token计算策略
+			ControlBehavior:        flow.Reject, // 表示流量控制器的控制策略
+			Threshold:              10,          // 表示流量阈值 1s有十个流量进来
+			StatIntervalInMs:       1000,        // 规则对应的流量控制器的独立统计结构的统计周期
+		},
+	})
+	if err != nil {
+		log.Fatalf("加载规则失败:%v", err)
+	}
+}
+```
+
+然后将这一行代码整到需要限流的操作之前
+
+```go
+e, b := sentinel.Entry("改成服务的名字", sentinel.WithTrafficType(base.Inbound))
+if b!=nil{
+	// 这里代表被限流了
+	// 将信息返回给前端，提示限流了
+	c.JSON(http.StatusTooManyRequest,gin.H{
+		"msg":"请求过于频繁，请稍后重试"
+	})
+	return
+}
+// 这个exit在操作执行完成之后
+e.Exit()
+```
