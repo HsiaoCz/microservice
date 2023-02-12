@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	httpTransport "github.com/go-kit/kit/transport/http"
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -12,5 +13,8 @@ func main() {
 	endp := service.GenUserEndpoint(user)
 
 	serverHandler := httpTransport.NewServer(endp, service.DecodeUserRequest, service.EncodeUserResponse)
-	http.ListenAndServe(":3202", serverHandler)
+	r := mux.NewRouter()
+	r.Handle(`/user/{uid:\d+}`, serverHandler)
+	// r.Methods("GET").Path(`/user/{uid:\d+}`).Handler(serverHandler)
+	http.ListenAndServe(":3202", r)
 }

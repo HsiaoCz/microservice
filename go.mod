@@ -7,6 +7,7 @@ require (
 	github.com/gin-gonic/gin v1.8.2
 	github.com/go-kit/kit v0.12.0
 	github.com/go-redis/redis v6.15.9+incompatible
+	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/consul/api v1.18.0
 	github.com/philchia/agollo/v4 v4.1.4
 	github.com/samuel/go-zookeeper v0.0.0-20201211165307-7117e9ea2414
@@ -21,6 +22,8 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/fatih/color v1.12.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
+	github.com/go-kit/log v0.2.1 // indirect
+	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect

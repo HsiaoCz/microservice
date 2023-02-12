@@ -82,4 +82,34 @@ func GenUserEndpoint(UserService IUserService) endpoint.Endpoint {
 }
 ```
 
-最后创建transport
+最后创建 transport,这里绑定具体的传输协议
+
+```go
+// 获取请求
+func DecodeUserRequest(c context.Context, r *http.Request) (any, error) {
+	if r.URL.Query().Get("uid") != "" {
+		uid, _ := strconv.Atoi(r.URL.Query().Get("uid"))
+		return UserRequest{
+			Uid: uid,
+		}, nil
+	}
+	return nil, errors.New("参数错误")
+}
+
+// 对响应进行编码
+func EncodeUserResponse(c context.Context, w http.ResponseWriter, response any) error {
+	w.Header().Add("Content-Type", "application/json")
+	return json.NewEncoder(w).Encode(response)
+}
+```
+
+那么现在产生了一个问题？如何是服务可以访问？
+
+我们可以在main中实现以下代码
+```go
+	user := service.UserService{}
+	endp := service.GenUserEndpoint(user)
+
+	serverHandler := httpTransport.NewServer(endp, service.DecodeUserRequest, service.EncodeUserResponse)
+	http.ListenAndServe(":3202", serverHandler)
+```
